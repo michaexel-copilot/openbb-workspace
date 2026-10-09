@@ -12,6 +12,6 @@ tar -C "$SRC/terminalpro" --exclude=.git --exclude=node_modules --exclude=dist -
 # Upstream ships bun.lock only; the Dockerfile expects package-lock.json + npm ci.
 sed -i \
   -e 's#COPY terminalpro/package.json terminalpro/package-lock.json ./#COPY terminalpro/package.json ./#' \
-  -e 's#^RUN npm ci$#RUN npm install --no-audit --no-fund#' \
+  -e 's#^RUN npm ci$#RUN npm install --legacy-peer-deps --no-audit --no-fund#' \
   "$OUT/Dockerfile"
 grep -q 'npm install --no-audit' "$OUT/Dockerfile"
