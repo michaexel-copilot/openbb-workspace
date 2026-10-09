@@ -14,4 +14,4 @@ sed -i \
   -e 's#COPY terminalpro/package.json terminalpro/package-lock.json ./#COPY terminalpro/package.json ./#' \
   -e 's#^RUN npm ci$#RUN npm install --legacy-peer-deps --no-audit --no-fund#' \
   "$OUT/Dockerfile"
-grep -q 'npm install --no-audit' "$OUT/Dockerfile"
+grep -q 'npm install --legacy-peer-deps' "$OUT/Dockerfile"
