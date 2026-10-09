@@ -1,0 +1,28 @@
+# OpenBB Workspace (Lite image: backend + frontend + redis + nginx, SQLite) behind
+# Traefik (Hostinger "Docker and Traefik" VPS template). Traefik runs in host
+# network mode and finds the container through the Docker socket.
+#
+# Login is handled by Workspace itself (admin user, password generated on first
+# start): docker exec openbb-workspace credentials
+services:
+  openbb-workspace:
+    image: ghcr.io/michaexel-copilot/openbb-workspace:latest
+    container_name: openbb-workspace
+    restart: unless-stopped
+    environment:
+      SELFURL: https://${WORKSPACE_DOMAIN:-workspace.michaexel.de}/api
+      FRONTENDURL: https://${WORKSPACE_DOMAIN:-workspace.michaexel.de}
+      PROURL: https://${WORKSPACE_DOMAIN:-workspace.michaexel.de}
+      OPENBB_ADMIN_EMAIL: ${OPENBB_ADMIN_EMAIL:-admin@openbb.co}
+    volumes:
+      - openbb-workspace-data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.openbb-workspace.rule=Host(`${WORKSPACE_DOMAIN:-workspace.michaexel.de}`)
+      - traefik.http.routers.openbb-workspace.entrypoints=websecure
+      - traefik.http.routers.openbb-workspace.tls=true
+      - traefik.http.routers.openbb-workspace.tls.certresolver=letsencrypt
+      - traefik.http.services.openbb-workspace.loadbalancer.server.port=3000
+
+volumes:
+  openbb-workspace-data:

@@ -1,0 +1,45 @@
+name: docker-image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  UPSTREAM_REPO: https://github.com/OpenBB-finance/workspace.git
+  # Pinned upstream snapshot (2026-09-09). Change it to update.
+  UPSTREAM_SHA: be00e95019a55d57af146919ee46b7e1a4859226
+  IMAGE: ghcr.io/michaexel-copilot/openbb-workspace
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch upstream source
+        run: |
+          git init -q upstream
+          git -C upstream remote add origin "$UPSTREAM_REPO"
+          git -C upstream fetch -q --depth 1 origin "$UPSTREAM_SHA"
+          git -C upstream checkout -q FETCH_HEAD
+      - name: Assemble build context
+        run: scripts/assemble-context.sh upstream context
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: context
+          build-args: OPENBB_IMAGE_VARIANT=lite
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
