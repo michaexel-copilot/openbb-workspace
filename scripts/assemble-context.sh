@@ -10,8 +10,10 @@ cp -a "$SRC/lite/." "$OUT/"
 tar -C "$SRC/backend-api/backend" --exclude=.git --exclude=__pycache__ -cf - . | tar -C "$OUT/backend" -xf -
 tar -C "$SRC/terminalpro" --exclude=.git --exclude=node_modules --exclude=dist -cf - . | tar -C "$OUT/terminalpro" -xf -
 # Upstream ships bun.lock only; the Dockerfile expects package-lock.json + npm ci.
+# Install with bun from the lockfile instead (npm resolution misses peer deps).
 sed -i \
-  -e 's#COPY terminalpro/package.json terminalpro/package-lock.json ./#COPY terminalpro/package.json ./#' \
-  -e 's#^RUN npm ci$#RUN npm install --legacy-peer-deps --no-audit --no-fund#' \
+  -e 's#COPY terminalpro/package.json terminalpro/package-lock.json ./#COPY terminalpro/package.json terminalpro/bun.lock ./#' \
+  -e 's#^RUN npm ci$#RUN npm install -g bun \&\& bun install --frozen-lockfile#' \
   "$OUT/Dockerfile"
-grep -q 'npm install --legacy-peer-deps' "$OUT/Dockerfile"
+grep -q 'bun install --frozen-lockfile' "$OUT/Dockerfile"
+grep -q 'terminalpro/bun.lock' "$OUT/Dockerfile"
