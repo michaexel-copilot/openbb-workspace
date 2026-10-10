@@ -16,6 +16,14 @@ services:
       OPENBB_ADMIN_EMAIL: ${OPENBB_ADMIN_EMAIL:-admin@openbb.co}
     volumes:
       - openbb-workspace-data:/data
+    # The image's own health check calls curl, which is not installed in it, so the
+    # container would never become healthy and Traefik would ignore it.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/api/health', timeout=4)"]
+      interval: 30s
+      timeout: 6s
+      start_period: 60s
+      retries: 3
     labels:
       - traefik.enable=true
       - traefik.http.routers.openbb-workspace.rule=Host(`${WORKSPACE_DOMAIN:-workspace.michaexel.de}`)
